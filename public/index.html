@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Veo - Watermark Remover</title>
+    <meta name="description" content="Professional, privacy-focused video watermark removal tool optimized for Gemini Veo generated content.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <main class="container">
+        <header class="hero">
+            <div class="badge">Engine: FFmpeg Local 2.0</div>
+            <h1>Clean your <span class="gradient-text">Gemini Veo</span> videos</h1>
+            <p>Advanced pixel-level restoration to remove watermarks without losing quality.</p>
+        </header>
+
+        <section class="upload-section glass">
+            <div id="drop-zone" class="drop-zone">
+                <div class="drop-zone__content">
+                    <div class="icon-container">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Upload Video</h3>
+                    <p>Drag & drop or <span class="browse">browse</span></p>
+                    <span class="file-limit">Max file size: 150MB</span>
+                </div>
+                <input type="file" id="file-input" accept="video/*" hidden>
+            </div>
+
+            <div id="processing-state" class="state-container hidden">
+                <div class="loader-wrapper">
+                    <div class="loader"></div>
+                    <div class="loader-inner"></div>
+                </div>
+                <h3>Restoring Pixels...</h3>
+                <p id="status-text">Your video is being processed using the Reverse Alpha Blending algorithm.</p>
+                <div class="progress-bar-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+            </div>
+
+            <div id="success-state" class="state-container hidden">
+                <div class="success-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h3>Process Complete</h3>
+                <p>The watermark has been successfully interpolated and removed.</p>
+                <button id="download-btn" class="primary-btn">Download Clean Video</button>
+                <button id="reset-btn" class="secondary-btn">Process Another</button>
+            </div>
+
+            <div id="error-state" class="state-container hidden">
+                <div class="error-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h3>Something went wrong</h3>
+                <p id="error-message">Failed to process video. Please try again.</p>
+                <button id="error-reset-btn" class="secondary-btn">Try Again</button>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="feature-card glass">
+                <div class="feature-icon">✨</div>
+                <h4>Zero Smudging</h4>
+                <p>Our algorithm restores textures instead of just blurring them.</p>
+            </div>
+            <div class="feature-card glass">
+                <div class="feature-icon">🔒</div>
+                <h4>Privacy First</h4>
+                <p>Videos are processed in a secure sandbox and deleted instantly.</p>
+            </div>
+            <div class="feature-card glass">
+                <div class="feature-icon">⚡</div>
+                <h4>FFmpeg Engine</h4>
+                <p>Powered by high-performance local video processing.</p>
+            </div>
+        </section>
+
+        <footer>
+            <p>&copy; 2024 Gemini Veo Watermark Remover. All rights reserved.</p>
+        </footer>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

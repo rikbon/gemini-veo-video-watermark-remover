@@ -1,0 +1,18 @@
+name: 'veo_wm_remover'
+
+services:
+  watermark-remover:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+    restart: always
+
+networks:
+  default:
+    name: watermark-network
