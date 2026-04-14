@@ -110,12 +110,17 @@ async function processVideoLocally(inputPath, outputFileName, deepClean = false)
   const height = videoStream.height;
 
   // Calculate coordinates (Gemini Veo watermark is bottom-right)
-  // We add a safety padding and slightly larger base dimensions to ensure drop shadows are caught.
+  // We add a safety padding and ensure the box is STRECTLY within the frame boundaries
+  // (FFmpeg delogo fails if the box touches the exact edge of the frame)
   const padding = deepClean ? 25 : 15;
-  const x = Math.max(0, width - 225 - padding);
-  const y = Math.max(0, height - 105 - padding);
-  const w = Math.min(205 + (padding * 2), width - x);
-  const h = Math.min(95 + (padding * 2), height - y);
+  const rawX = Math.max(2, width - 225 - padding);
+  const rawY = Math.max(2, height - 105 - padding);
+  
+  // Ensure the box doesn't hit the right/bottom edges (leave at least 2px)
+  const x = Math.floor(rawX);
+  const y = Math.floor(rawY);
+  const w = Math.floor(Math.min(205 + (padding * 2), width - x - 2));
+  const h = Math.floor(Math.min(95 + (padding * 2), height - y - 2));
 
   const blurRadius = deepClean ? 12 : 5;
 
