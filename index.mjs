@@ -89,10 +89,10 @@ const upload = multer({
  * Local Watermark Removal using FFmpeg delogo filter
  * This applies the "Reverse" logic locally by interpolating the specified region.
  */
-async function processVideoLocally(inputPath, outputFileName) {
+async function processVideoLocally(inputPath, outputFileName, deepClean = false) {
   const outputPath = path.resolve(OUTPUT_DIR, outputFileName);
   
-  logger.info(`Processing video locally: ${path.basename(inputPath)}`);
+  logger.info(`Processing video locally: ${path.basename(inputPath)} (Deep Clean: ${deepClean})`);
 
   // Get video dimensions first since delogo may not support expressions in all environments
   const probe = await new Promise((resolve, reject) => {
@@ -107,20 +107,29 @@ async function processVideoLocally(inputPath, outputFileName) {
   const height = videoStream.height;
 
   // Calculate coordinates (Gemini Veo watermark is bottom-right)
-  const x = Math.max(0, width - 220);
-  const y = Math.max(0, height - 110);
-  const w = Math.min(200, width - x);
-  const h = Math.min(90, height - y);
+  // We add a safety padding and slightly larger base dimensions to ensure drop shadows are caught.
+  const padding = deepClean ? 25 : 15;
+  const x = Math.max(0, width - 225 - padding);
+  const y = Math.max(0, height - 105 - padding);
+  const w = Math.min(205 + (padding * 2), width - x);
+  const h = Math.min(95 + (padding * 2), height - y);
 
-  logger.info(`Detected resolution: ${width}x${height}. Applying delogo at [${x},${y},${w},${h}]`);
+  const band = deepClean ? 12 : 6;
+  const blurRadius = deepClean ? 12 : 5;
+
+  logger.info(`Detected resolution: ${width}x${height}. Applying Enhanced Seamless Removal at [${x},${y},${w},${h}] with padding ${padding}, band ${band}`);
 
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
-      .videoFilters([
-        {
-          filter: "delogo",
-          options: { x, y, w, h, show: 0 }
-        }
+      // Enhanced Multi-Pass Filter Chain:
+      // 1. apply delogo with wide fuzzy band (6)
+      // 2. split the stream to create a localized blur mask
+      // 3. crop, blur, and overlay the region to hide interpolation artifacts
+      .complexFilter([
+        `[0:v]delogo=x=${x}:y=${y}:w=${w}:h=${h}:band=${band}[cleaned]`,
+        `[cleaned]split[a][b]`,
+        `[b]crop=${w}:${h}:${x}:${y},boxblur=${blurRadius}:1[blurred]`,
+        `[a][blurred]overlay=${x}:${y}:shortest=1`
       ])
       .videoCodec('libx264')
       .outputOptions("-y") // Force overwrite
@@ -150,9 +159,10 @@ app.post("/process-video", upload.single("video"), async (req, res) => {
 
   const inputPath = req.file.path;
   const outputFileName = `clean-${path.basename(inputPath)}`;
+  const deepClean = req.body.deepClean === "true";
   
   try {
-    const outputPath = await processVideoLocally(inputPath, outputFileName);
+    const outputPath = await processVideoLocally(inputPath, outputFileName, deepClean);
     
     // Serve the file to the user
     res.download(outputPath, outputFileName, async (err) => {

@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetBtn = document.getElementById('reset-btn');
     const errorResetBtn = document.getElementById('error-reset-btn');
 
+    const deepCleanToggle = document.getElementById('deep-clean-toggle');
+    const optionsContainer = document.querySelector('.options-container');
+
     let processedFileBlob = null;
     let processedFileName = '';
 
@@ -64,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function startProcessing(file) {
         // Switch states
         dropZone.classList.add('hidden');
+        optionsContainer.classList.add('hidden');
         processingState.classList.remove('hidden');
         successState.classList.add('hidden');
         errorState.classList.add('hidden');
@@ -73,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const formData = new FormData();
         formData.append('video', file);
+        formData.append('deepClean', deepCleanToggle.checked);
 
         try {
             // We use XMLHttpRequest for progress tracking
@@ -85,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (e.lengthComputable) {
                     const percent = Math.round((e.loaded / e.total) * 40); // Upload is first 40%
                     progressBar.style.width = `${percent}%`;
-                    if (percent > 35) statusText.innerText = 'Processing frames and restoring pixels...';
+                    if (percent > 35) statusText.innerText = 'AI Analysis and Pixel Restoration...';
                 }
             };
 
@@ -144,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showError(msg) {
         errorMessage.innerText = msg;
         dropZone.classList.add('hidden');
+        optionsContainer.classList.add('hidden');
         processingState.classList.add('hidden');
         successState.classList.add('hidden');
         errorState.classList.remove('hidden');
@@ -164,6 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const resetUI = () => {
         dropZone.classList.remove('hidden');
+        optionsContainer.classList.remove('hidden');
         processingState.classList.add('hidden');
         successState.classList.add('hidden');
         errorState.classList.add('hidden');
