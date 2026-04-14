@@ -29,6 +29,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy for rate limiting (needed behind Docker/LB/Proxies)
+app.set('trust proxy', 1);
+
 // Security & Middleware
 app.use(helmet({
   contentSecurityPolicy: {
