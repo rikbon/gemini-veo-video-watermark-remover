@@ -112,17 +112,21 @@ async function processVideoLocally(inputPath, outputFileName, deepClean = false)
   // Calculate coordinates (Gemini Veo watermark is bottom-right)
   // We add a safety padding and ensure the box is STRECTLY within the frame boundaries
   // (FFmpeg delogo fails if the box touches the exact edge of the frame)
-  const padding = deepClean ? 25 : 15;
-  const rawX = Math.max(2, width - 225 - padding);
-  const rawY = Math.max(2, height - 105 - padding);
+  // We've SHRUNK the base dimensions to tightly fit the "Veo" logo and avoid huge smudges.
+  const padding = deepClean ? 20 : 10;
+  const baseWidth = 120;
+  const baseHeight = 60;
   
-  // Ensure the box doesn't hit the right/bottom edges (leave at least 2px)
+  const rawX = Math.max(2, width - baseWidth - padding - 20); // 20px offset from right edge
+  const rawY = Math.max(2, height - baseHeight - padding - 20); // 20px offset from bottom edge
+  
+  // Ensure the box doesn't hit the right/bottom edges (leave at least 4px)
   const x = Math.floor(rawX);
   const y = Math.floor(rawY);
-  const w = Math.floor(Math.min(205 + (padding * 2), width - x - 2));
-  const h = Math.floor(Math.min(95 + (padding * 2), height - y - 2));
+  const w = Math.floor(Math.min(baseWidth + (padding * 2), width - x - 4));
+  const h = Math.floor(Math.min(baseHeight + (padding * 2), height - y - 4));
 
-  const blurRadius = deepClean ? 12 : 5;
+  const blurRadius = deepClean ? 15 : 8;
 
   logger.info(`Detected resolution: ${width}x${height}. Applying Enhanced Seamless Removal at [${x},${y},${w},${h}] with padding ${padding}`);
 
@@ -131,12 +135,14 @@ async function processVideoLocally(inputPath, outputFileName, deepClean = false)
       // Enhanced Multi-Pass Filter Chain:
       // 1. apply delogo (base interpolation)
       // 2. split the stream to create a localized blur mask
-      // 3. crop, blur, and overlay the region to hide interpolation artifacts
+      // 3. crop, blur, apply a FEATHERED alpha mask, and overlay
       .complexFilter([
         `[0:v]delogo=x=${x}:y=${y}:w=${w}:h=${h}[cleaned]`,
         `[cleaned]split[a][b]`,
-        `[b]crop=${w}:${h}:${x}:${y},boxblur=${blurRadius}:1[blurred]`,
-        `[a][blurred]overlay=${x}:${y}:shortest=1`
+        `[b]crop=${w}:${h}:${x}:${y},boxblur=${blurRadius}:2,split[b1][b2]`,
+        `[b2]format=yuva420p,geq=lum='p(X,Y)':a='255*(1-pow(2*X/W-1,4))*(1-pow(2*Y/H-1,4))'[mask]`,
+        `[b1][mask]alphamerge[feathered]`,
+        `[a][feathered]overlay=${x}:${y}:shortest=1`
       ])
       .videoCodec('libx264')
       .outputOptions("-y") // Force overwrite
