@@ -117,19 +117,18 @@ async function processVideoLocally(inputPath, outputFileName, deepClean = false)
   const w = Math.min(205 + (padding * 2), width - x);
   const h = Math.min(95 + (padding * 2), height - y);
 
-  const band = deepClean ? 12 : 6;
   const blurRadius = deepClean ? 12 : 5;
 
-  logger.info(`Detected resolution: ${width}x${height}. Applying Enhanced Seamless Removal at [${x},${y},${w},${h}] with padding ${padding}, band ${band}`);
+  logger.info(`Detected resolution: ${width}x${height}. Applying Enhanced Seamless Removal at [${x},${y},${w},${h}] with padding ${padding}`);
 
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
       // Enhanced Multi-Pass Filter Chain:
-      // 1. apply delogo with wide fuzzy band (6)
+      // 1. apply delogo (base interpolation)
       // 2. split the stream to create a localized blur mask
       // 3. crop, blur, and overlay the region to hide interpolation artifacts
       .complexFilter([
-        `[0:v]delogo=x=${x}:y=${y}:w=${w}:h=${h}:band=${band}[cleaned]`,
+        `[0:v]delogo=x=${x}:y=${y}:w=${w}:h=${h}[cleaned]`,
         `[cleaned]split[a][b]`,
         `[b]crop=${w}:${h}:${x}:${y},boxblur=${blurRadius}:1[blurred]`,
         `[a][blurred]overlay=${x}:${y}:shortest=1`
